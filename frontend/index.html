@@ -237,43 +237,46 @@
             return;
         }
 
-        // 1. UI: Bloquear botón y mostrar carga
         downloadBtn.disabled = true;
-        btnContent.innerHTML = '<div class="spinner"></div> Descargando...';
+        btnContent.innerHTML = '<div class="spinner"></div> Procesando...';
 
         try {
-            // 2. Realizar la petición real al backend de Python
-            const response = await fetch('http://127.0.0.1:5000/download', {
+            // URL de tu backend en Render
+            const apiUrl = 'https://videodownload-20lc.onrender.com/download';
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url })
             });
 
-            const result = await response.json();
+            if (!response.ok) throw new Error('Error en la descarga');
 
-            if (response.ok && result.status === 'success') {
-                // 3. UI: Éxito
-                btnContent.innerHTML = ' ¡Completado!';
-                downloadBtn.style.background = 'var(--success)';
-                console.log("Guardado en:", result.path);
-            } else {
-                throw new Error(result.message || 'Error en el servidor');
-            }
+            // RECIBIR EL ARCHIVO (Blob)
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
             
+            // Crear un link invisible para forzar la descarga en el navegador
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = ""; // El navegador usará el nombre original si el server lo envía bien
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            btnContent.innerHTML = '✨ ¡Completado!';
+            downloadBtn.style.background = 'var(--success)';
+            urlInput.value = '';
+
         } catch (error) {
-            // 4. UI: Manejo de errores
-            console.error("Error de conexión:", error);
-            btnContent.innerHTML = ' Error de servidor';
+            console.error("Error:", error);
+            btnContent.innerHTML = '❌ Error de servidor';
             downloadBtn.style.background = '#ef4444';
         } finally {
-            // 5. UI: Resetear estado después de un tiempo
             setTimeout(() => {
                 btnContent.innerHTML = 'Descargar contenido';
                 downloadBtn.style.background = '';
                 downloadBtn.disabled = false;
-                if (btnContent.innerHTML === ' ¡Completado!') urlInput.value = '';
             }, 4000);
         }
     });
@@ -282,7 +285,6 @@
         try { new URL(string); return true; } catch (_) { return false; }
     }
 
-    // Permitir Enter para descargar
     urlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') downloadBtn.click();
     });
