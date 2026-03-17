@@ -22,8 +22,16 @@ def download_video():
         # 'best' es más seguro para servidores gratis porque no siempre tienen FFmpeg para unir audio/video
         ydl_opts = {
             'outtmpl': os.path.join(tmp_dir, '%(title)s.%(ext)s'),
-            'format': 'best', 
+            'format': 'best',
+            # --- NUEVAS OPCIONES PARA EVITAR BLOQUEOS ---
             'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'add_header': [
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language: es-ES,es;q=0.9,en;q=0.8',
+            ],
+            'extract_flat': False,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
